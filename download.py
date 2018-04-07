@@ -13,10 +13,10 @@
 # format with 90% compression quality.
 
 import sys, os, multiprocessing, csv
-from urllib import request, error
+from urllib2 import urlopen
 from PIL import Image
 from io import BytesIO
-
+import tqdm
 
 def parse_data(data_file):
     csvfile = open(data_file, 'r')
@@ -26,6 +26,7 @@ def parse_data(data_file):
 
 
 def download_image(key_url):
+    size = 299, 299
     out_dir = sys.argv[2]
     (key, url) = key_url
     filename = os.path.join(out_dir, '{}.jpg'.format(key))
@@ -35,7 +36,7 @@ def download_image(key_url):
         return 0
 
     try:
-        response = request.urlopen(url)
+        response = urlopen(url)
         image_data = response.read()
     except:
         print('Warning: Could not download image {} from {}'.format(key, url))
@@ -54,7 +55,8 @@ def download_image(key_url):
         return 1
 
     try:
-        pil_image_rgb.save(filename, format='JPEG', quality=90)
+        pil_image_rgb.thumbnail(size)
+        pil_image_rgb.save(filename, format='JPEG')#, quality=90)
     except:
         print('Warning: Failed to save image {}'.format(filename))
         return 1
