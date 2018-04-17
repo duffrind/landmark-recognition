@@ -1,0 +1,1 @@
+rsync -a --ignore-existing train/ duffrin@tpt:/Akamai/landmark/train/
