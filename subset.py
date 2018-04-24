@@ -30,7 +30,7 @@ ids = train_ids.sort_values(ascending=False)[:2].index.tolist()
 
 #new_train.to_csv('new_train.csv', index=False)
 
-ids = [8997, 9216]
+ids = [5376, 2743]
 
 newest_train = train[train.landmark_id.isin(ids)]
 

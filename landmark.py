@@ -7,27 +7,46 @@ import numpy as np
 import tensorflow as tf
 from scipy.misc import imread
 from skimage.transform import resize
-#import random
 from sklearn.model_selection import train_test_split
+import os.path
+import pickle
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
 def get_data():
     # crawl through all ids from lines
-    images = []
-    labels = []
-    with open('newest_train.csv', 'r') as f:
-        for line in f.readlines()[1:]:
-            id_num, _, landmark_id = line.split(',')
-            try:
-                picture = imread('train/' + id_num + '.jpg') # subset to 100x100x3
-                picture = resize(picture, (100,100,3), mode='constant')
-                labels.append(landmark_id)
-                image = np.zeros((100,100,3))
-                image[:picture.shape[0],:picture.shape[1]] = picture
-                images.append(image)
-            except:
-                print('image not found: ' + str(id_num))
+    max_bytes = 2**31 - 1
+    try:
+        bytes_in = bytearray(0)
+        input_size = os.path.getsize('images.p')
+        with open('images.p', 'rb') as f:
+            for _ in range(0, input_size, max_bytes):
+                bytes_in += f.read(max_bytes)
+            images = pickle.loads(bytes_in)
+        with open('labels.p', 'rb') as f:
+            labels = pickle.load(f)
+    except:
+        images = []
+        labels = []
+        with open('newest_train.csv', 'r') as f:
+            for line in f.readlines()[1:]:
+                id_num, _, landmark_id = line.split(',')
+                try:
+                    picture = imread('train/' + id_num + '.jpg') # subset to 100x100x3
+                    picture = resize(picture, (100,100,3), mode='constant')
+                    labels.append(landmark_id)
+                    image = np.zeros((100,100,3))
+                    image[:picture.shape[0],:picture.shape[1]] = picture
+                    images.append(image)
+                except:
+                    print('image not found: ' + str(id_num))
+            max_bytes = 2**31 - 1
+            bytes_out = pickle.dumps(images)
+            with open('images.p', 'wb+') as f:
+                for idx in range(0, len(bytes_out), max_bytes):
+                    f.write(bytes_out[idx:idx+max_bytes])
+            with open('labels.p', 'wb+') as f:
+                pickle.dump(labels, f)
     # subset
     train_data, test_data, train_labels, test_labels = train_test_split(images, labels, test_size=0.33, random_state=42)
     return np.asarray(train_data, dtype=np.float16), np.asarray(train_labels, dtype=np.int32), np.asarray(test_data, dtype=np.float16), np.asarray(test_labels, dtype=np.int32)
@@ -83,7 +102,7 @@ def cnn_model_fn(features, labels, mode): # can we add batch normalization -- th
 
   # Configure the Training Op (for TRAIN mode)
   if mode == tf.estimator.ModeKeys.TRAIN:
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001) # add decay
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01) # add decay # 0.001
     train_op = optimizer.minimize(
         loss=loss,
         global_step=tf.train.get_global_step())
@@ -118,12 +137,12 @@ def main(unused_argv):
   train_input_fn = tf.estimator.inputs.numpy_input_fn(
     x={"x": train_data},
     y=train_labels,
-    batch_size=1, # 100
+    batch_size=100, # 100
     num_epochs=None,
     shuffle=True)
   mnist_classifier.train(
     input_fn=train_input_fn,
-    steps=3, ### CHANGE ME ### prev=20000
+    steps=200, ### CHANGE ME ### prev=20000
     hooks=[logging_hook])
   # Evaluate the model and print results
   eval_input_fn = tf.estimator.inputs.numpy_input_fn(
