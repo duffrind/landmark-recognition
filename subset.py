@@ -42,16 +42,3 @@ newest_train.to_csv('newest_train.csv', index=False)
 #training_subset = new_train.random_sample(.7)
 # convert each image into a matrix
 # training_subset IS NOW an array of matrices
-
-ids = dict()
-i = 0
-
-def get_id(cur_id):
-    global i
-    global ids
-    if ids.get(cur_id, -1) == -1:
-        ids[cur_id] = i
-        i += 1
-    return ids[cur_id]
-
-new_train.landmark_id = new_train.landmark_id.apply(lambda id: get_id(id))
