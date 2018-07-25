@@ -1,0 +1,13 @@
+python retrain.py --image_dir all_photos/ \
+    --tfhub_module https://tfhub.dev/google/imagenet/mobilenet_v1_100_128/quantops/feature_vector/1
+
+
+
+python label_image.py \
+  --graph=/tmp/output_graph.pb --labels=/tmp/output_labels.txt \
+  --input_layer=Placeholder \
+  --output_layer=final_result \
+  --input_height=128 --input_width=128 \
+  --image=training/0/0a9c9ba06566143d.jpg
+
+python confusion_matrix.py --graph=/tmp/output_graph.pb --labels=/tmp/output_labels.txt --input_layer=Placeholder   --output_layer=final_result   --input_height=128 --input_width=128

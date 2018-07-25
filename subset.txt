@@ -1,0 +1,7 @@
+take random 5000 from top 19 images. easy to do with pandas
+
+df = pd.DataFrame({'a': [1,2,3,4,5,6,7],
+                   'b': [1,1,1,0,0,0,0]})
+​
+grouped = df.groupby('b')
+grouped.apply(lambda x: x.sample(n=5000))
